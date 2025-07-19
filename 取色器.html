@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .get-color-btn {
+      display: block;
+      margin: 0 auto;
+      padding: 10px;
+      border-radius: 30px;
+      outline: none;
+    }
+
+    .history-wrap {
+      margin-top: 40px;
+      background-color: rgb(243 251 241);
+      padding: 20px;
+      border-radius: 16px;
+    }
+
+    .history-list {
+      height: 70vh;
+      overflow: auto;
+    }
+
+    .history-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    .history-list .item {
+      display: flex;
+      align-items: center;
+      padding: 10px 150px;
+      padding-left: 10px;
+      margin: 16px 0;
+      border-radius: 6px;
+      background-color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+    }
+
+    .history-list .time {
+      width: 160px;
+    }
+
+    .history-list .color {
+      flex: 1;
+      padding: 18px;
+      margin-left: 6px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      /* background: rgba(0, 0, 0, .1); */
+      transition: all .5s;
+    }
+
+    .toast {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 120px;
+      height: 40px;
+      background: rgba(0, 0, 0, .7);
+      border-radius: 8px;
+      color: #fff;
+      transition: all .5s;
+    }
+
+    .color-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, .4);
+      transition: all .5s;
+    }
+
+    .list {
+      width: 500px;
+      background-color: #fff;
+      border-radius: 6px;
+    }
+
+    .list .item {
+      display: flex;
+      align-items: center;
+      padding: 10px 10px;
+      cursor: pointer;
+    }
+
+    .list .color {
+      flex: 1;
+      padding: 8px;
+      margin-left: 6px;
+      border-radius: 6px;
+    }
+
+    .clear-history {
+      padding: 4px 8px;
+      outline: none;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      border-radius: 18px;
+    }
+
+    .clear-history-wrap {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .clear-history:hover {
+      background-color: #eee;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="color-dialog" id="colorDialog" onclick="hideColorDialog()">
+    <div class="list">
+      <div class="item">rgba: <div class="color" id="rgba_color" onclick="copyAndUpdate(this.innerHTML)"></div>
+      </div>
+      <div class="item">hex: <div class="color" id="hex_color" onclick="copyAndUpdate(this.innerHTML)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-wrap" id="toast">
+    <div class="toast">已复制</div>
+  </div>
+  <button class="get-color-btn" onclick="pickColor()">颜色获取</button>
+
+  <div class="history-wrap">
+    <h3>历史颜色</h3>
+    <div class="history-list" id="historyList">
+    </div>
+    <div class="clear-history-wrap">
+      <button onclick="clearHistory()" class="clear-history">清空历史</button>
+    </div>
+  </div>
+  <script>
+    if (!('EyeDropper' in window)) {
+      alert('您的浏览器版本不支持EyeDropper取色')
+    }
+    const showColorDialog = (rgbhex) => {
+      hex_color.innerHTML = rgbhex
+      hex_color.style.color = reverseColor(rgbhex)
+      hex_color.style.background = rgbhex
+
+      const rgba = `rgba(${hexToRgb(rgbhex).join(',')},1)`
+      rgba_color.innerHTML = rgba
+      rgba_color.style.color = reverseColor(rgba)
+      rgba_color.style.background = rgba
+
+      colorDialog.style.display = 'flex'
+    }
+    const hideColorDialog = () => colorDialog.style.display = 'none'
+
+    const eyeDropper = new EyeDropper(); // 创建对象
+    async function pickColor() {
+      try {
+        const ColorResult = await eyeDropper.open();// 取得吸取结果
+        const rgbhex = ColorResult.sRGBHex// 取得颜色并设置颜色
+
+        showColorDialog(rgbhex)
+      } catch (e) {
+        console.log(e);
+        console.warn('你取消了取色操作')
+      }
+    }
+
+    function copyAndUpdate(color) {
+      setCache(color)
+      getHistory()
+      navigator.clipboard.writeText(color).then((res) => {
+        showToast()
+        hideColorDialog()
+      }).catch((error => {
+        console.log(error);
+      }))
+    }
+
+    function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : '';
+    }
+
+    /* rgba or hex */
+    function reverseColor(color = '') {
+      let rgbArr = [] // rgb
+      if (color.startsWith('#')) {
+        rgbArr = hexToRgb(color)
+      } else {
+        rgbArr = color.replace('rgba(', '').replace(')', '').split(',').map(e => parseInt(e))
+      }
+
+      const [r, g, b] = rgbArr
+
+      if ((r * 0.299 + g * 0.587 + b * 0.114) > 186) { // 根据亮度判断对比色
+        return '#000'; // 返回深色（黑色）作为对比色
+      } else {
+        return '#fff'; // 返回浅色（白色）作为对比色
+      }
+    }
+
+    getHistory()
+    function getHistory() {
+      const list = getCacheList()
+      let html = ''
+      for (let i = 0; i < list.length; i++) {
+        const color_time = list[i];
+        const [time, color] = color_time.split('@_@')
+        const fColor = reverseColor(color)
+        html += `<div class="item"><div class="time">${time}</div><div class="color" onclick="copy('${color}')" style="color:${fColor};background:${color}">${color}</div></div>`
+      }
+      historyList.innerHTML = html
+    }
+
+    function clearHistory() {
+      localStorage.clear()
+      getHistory()
+    }
+
+    function setCache(color) {
+      const old = localStorage.getItem('colorList')
+      const oldList = old ? JSON.parse(old) : []
+      const date = new Date()
+      const time = date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds()
+      oldList.push(`${time}@_@${color}`)
+      if (oldList.length > 100) oldList.shift()
+      localStorage.setItem('colorList', JSON.stringify(oldList))
+    }
+
+    function getCacheList() {
+      const old = localStorage.getItem('colorList')
+      if (old) return JSON.parse(old).reverse()
+      return []
+    }
+
+    function copy(color) {
+      navigator.clipboard.writeText(color).then((res) => {
+        showToast()
+      }).catch((error => {
+        console.log(error);
+      }))
+    }
+
+    function showToast() {
+      toast.style.display = "flex"
+      setTimeout(() => {
+        toast.style.display = "none"
+      }, 500)
+    }
+  </script>
+</body>
+
+</html>
