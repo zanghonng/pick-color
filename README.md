@@ -1,3 +1,3 @@
 # a web plat color pick ,browser must support new EyeDropper api
-[visit address](https://zanghonng.github.io/pick-color/): https://zanghonng.github.io/pick-color/
+[online visit address](https://zanghonng.github.io/pick-color/)
 
