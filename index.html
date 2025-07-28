@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
   <title>screen color pick</title>
   <style>
     .get-color-btn {
@@ -49,9 +50,17 @@
     .history-list .color {
       flex: 1;
       padding: 18px;
-      margin-left: 6px;
-      border-radius: 6px;
       border: 1px solid #ddd;
+    }
+
+    .history-list .color1 {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+
+    .history-list .color2 {
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
     }
 
     .toast-wrap {
@@ -134,9 +143,9 @@
 <body>
   <div class="color-dialog" id="colorDialog" onclick="hideColorDialog()">
     <div class="list">
-      <div class="item">rgba: <div class="color" id="rgba_color" onclick="copyAndUpdate(this.innerHTML)"></div>
+      <div class="item">rgba: <div class="color" id="rgba_color" onclick="copyAndUpdate(this)"></div>
       </div>
-      <div class="item">hex: <div class="color" id="hex_color" onclick="copyAndUpdate(this.innerHTML)"></div>
+      <div class="item">hex: <div class="color" id="hex_color" onclick="copyAndUpdate(this)"></div>
       </div>
     </div>
   </div>
@@ -167,6 +176,9 @@
       rgba_color.style.color = reverseColor(rgba)
       rgba_color.style.background = rgba
 
+      rgba_color.setAttribute('data-color', rgbhex + '@_@' + rgba)
+      hex_color.setAttribute('data-color', rgbhex + '@_@' + rgba)
+
       colorDialog.style.display = 'flex'
     }
     const hideColorDialog = () => colorDialog.style.display = 'none'
@@ -184,15 +196,14 @@
       }
     }
 
-    function copyAndUpdate(color) {
-      setCache(color)
+    function copyAndUpdate(self) {
+      const colors = self.getAttribute('data-color')
+      setCache(colors)
       getHistory()
-      navigator.clipboard.writeText(color).then((res) => {
+      copy(self.innerHTML).then((res) => {
         showToast()
         hideColorDialog()
-      }).catch((error => {
-        console.log(error);
-      }))
+      })
     }
 
     function hexToRgb(hex) {
@@ -224,9 +235,13 @@
       let html = ''
       for (let i = 0; i < list.length; i++) {
         const color_time = list[i];
-        const [time, color] = color_time.split('@_@')
-        const fColor = reverseColor(color)
-        html += `<div class="item"><div class="time">${time}</div><div class="color" onclick="copy('${color}')" style="color:${fColor};background:${color}">${color}</div></div>`
+        const [time, hexColor, rgbColor] = color_time.split('@_@')
+        const fColor = reverseColor(hexColor)
+        html += `<div class="item">
+          <div class="time">${time}</div>
+          <div class="color color1" onclick="copy('${hexColor}')" style="color:${fColor};background:${hexColor}">${hexColor}</div>
+          <div class="color color2" onclick="copy('${rgbColor}')" style="color:${fColor};background:${rgbColor}">${rgbColor}</div>
+        </div>`
       }
       historyList.innerHTML = html
     }
@@ -253,10 +268,11 @@
     }
 
     function copy(color) {
-      navigator.clipboard.writeText(color).then((res) => {
+      return navigator.clipboard.writeText(color).then((res) => {
         showToast()
       }).catch((error => {
         console.log(error);
+        return Promise.reject(error)
       }))
     }
 
@@ -264,7 +280,7 @@
       toast.style.display = "flex"
       setTimeout(() => {
         toast.style.display = "none"
-      }, 500)
+      }, 1500)
     }
   </script>
 </body>
