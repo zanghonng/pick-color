@@ -34,7 +34,7 @@
     .history-list .item {
       display: flex;
       align-items: center;
-      padding: 10px 150px;
+      padding: 10px 100px;
       padding-left: 10px;
       margin: 16px 0;
       border-radius: 6px;
@@ -119,6 +119,22 @@
       padding: 8px;
       margin-left: 6px;
       border-radius: 6px;
+    }
+
+    .clear-item-history {
+      margin-left: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      border-radius: 30px;
+    }
+
+    .clear-item-history:hover {
+      background-color: #eee;
     }
 
     .clear-history {
@@ -241,9 +257,17 @@
           <div class="time">${time}</div>
           <div class="color color1" onclick="copy('${hexColor}')" style="color:${fColor};background:${hexColor}">${hexColor}</div>
           <div class="color color2" onclick="copy('${rgbColor}')" style="color:${fColor};background:${rgbColor}">${rgbColor}</div>
+          <div class="clear-item-history" onclick="deleteColor('${i}')">X</div>
         </div>`
       }
       historyList.innerHTML = html
+    }
+
+    function deleteColor(index) {
+      const list = getCacheList()
+      list.splice(index, 1)
+      localStorage.setItem('colorList', JSON.stringify(list.reverse()))
+      getHistory()
     }
 
     function clearHistory() {
